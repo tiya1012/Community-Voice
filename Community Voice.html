@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CommunityVoice - Participatory Budget Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .vote-button {
+            transition: all 0.2s ease;
+        }
+        
+        .vote-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .progress-bar {
+            transition: width 0.8s ease;
+        }
+        
+        .sentiment-positive { color: #10b981; }
+        .sentiment-negative { color: #ef4444; }
+        .sentiment-neutral { color: #6b7280; }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="text-3xl">🏛️</div>
+                    <h1 class="text-2xl font-bold">CommunityVoice</h1>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#projects" class="hover:text-blue-200 transition-colors">Projects</a>
+                    <a href="#forum" class="hover:text-blue-200 transition-colors">Forum</a>
+                    <a href="#analytics" class="hover:text-blue-200 transition-colors">Analytics</a>
+                    <a href="#budget" class="hover:text-blue-200 transition-colors">Budget</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm">
+                        <div>Budget Cycle 2024</div>
+                        <div class="text-blue-200">$2.5M Available</div>
+                    </div>
+                    <button id="loginBtn" class="bg-white text-purple-700 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-16">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold mb-4">Shape Your Community's Future</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">Propose projects, vote on priorities, and help decide how your community budget is spent</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="proposeBtn" class="bg-green-500 hover:bg-green-600 px-8 py-3 rounded-full font-semibold text-lg transition-colors">
+                    💡 Propose Project
+                </button>
+                <button id="viewProjectsBtn" class="bg-white hover:bg-gray-100 text-purple-700 px-8 py-3 rounded-full font-semibold text-lg transition-colors">
+                    🗳️ View & Vote
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Tabs -->
+    <div class="container mx-auto px-6 py-8">
+        <div class="flex flex-wrap border-b border-gray-200 mb-8">
+            <button class="tab-button tab-active px-6 py-3 font-semibold rounded-t-lg mr-2" data-tab="projects">
+                🏗️ Projects & Voting
+            </button>
+            <button class="tab-button px-6 py-3 font-semibold rounded-t-lg mr-2 hover:bg-gray-100" data-tab="forum">
+                💬 Community Forum
+            </button>
+            <button class="tab-button px-6 py-3 font-semibold rounded-t-lg mr-2 hover:bg-gray-100" data-tab="analytics">
+                📊 Opinion Analytics
+            </button>
+            <button class="tab-button px-6 py-3 font-semibold rounded-t-lg hover:bg-gray-100" data-tab="budget">
+                💰 Budget Overview
+            </button>
+        </div>
+
+        <!-- Projects Tab -->
+        <div id="projects-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Project Proposals -->
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold">Current Proposals</h3>
+                        <div class="flex space-x-2">
+                            <select id="sortProjects" class="px-4 py-2 border rounded-lg">
+                                <option value="votes">Most Votes</option>
+                                <option value="recent">Most Recent</option>
+                                <option value="cost">Lowest Cost</option>
+                            </select>
+                            <select id="filterCategory" class="px-4 py-2 border rounded-lg">
+                                <option value="all">All Categories</option>
+                                <option value="infrastructure">Infrastructure</option>
+                                <option value="parks">Parks & Recreation</option>
+                                <option value="education">Education</option>
+                                <option value="safety">Public Safety</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="projectsList" class="space-y-6">
+                        <!-- Projects will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Voting Summary -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold mb-4">Voting Progress</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Total Votes Cast</span>
+                                    <span id="totalVotes">1,247</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 62%"></div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Target: 2,000 votes</div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Participation Rate</span>
+                                    <span>31%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 31%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold mb-4">Top Categories</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span>🏗️ Infrastructure</span>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">423 votes</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>🌳 Parks & Recreation</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">387 votes</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>🎓 Education</span>
+                                <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">298 votes</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>🚔 Public Safety</span>
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">139 votes</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forum Tab -->
+        <div id="forum-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h3 class="text-2xl font-bold mb-4">Community Discussions</h3>
+                        <div class="flex space-x-4 mb-6">
+                            <button class="forum-filter bg-blue-600 text-white px-4 py-2 rounded-lg" data-filter="all">All Topics</button>
+                            <button class="forum-filter hover:bg-gray-100 px-4 py-2 rounded-lg" data-filter="projects">Project Discussions</button>
+                            <button class="forum-filter hover:bg-gray-100 px-4 py-2 rounded-lg" data-filter="general">General</button>
+                        </div>
+                        
+                        <div id="forumPosts" class="space-y-4">
+                            <!-- Forum posts will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h4 class="text-xl font-bold mb-4">Start New Discussion</h4>
+                        <form id="newPostForm">
+                            <input type="text" id="postTitle" placeholder="Discussion title..." class="w-full px-4 py-2 border rounded-lg mb-3">
+                            <select id="postCategory" class="w-full px-4 py-2 border rounded-lg mb-3">
+                                <option value="general">General Discussion</option>
+                                <option value="projects">Project Related</option>
+                                <option value="feedback">Feedback</option>
+                            </select>
+                            <textarea id="postContent" placeholder="Share your thoughts..." class="w-full px-4 py-2 border rounded-lg mb-3" rows="4"></textarea>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold">
+                                Post Discussion
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold mb-4">Active Contributors</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">S</div>
+                                <div>
+                                    <div class="font-semibold">Sarah Chen</div>
+                                    <div class="text-sm text-gray-500">23 posts this month</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">M</div>
+                                <div>
+                                    <div class="font-semibold">Mike Rodriguez</div>
+                                    <div class="text-sm text-gray-500">18 posts this month</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">A</div>
+                                <div>
+                                    <div class="font-semibold">Anna Johnson</div>
+                                    <div class="text-sm text-gray-500">15 posts this month</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4">Sentiment Analysis</h3>
+                    <div class="mb-6">
+                        <canvas id="sentimentChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold sentiment-positive">68%</div>
+                            <div class="text-sm text-gray-600">Positive</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold sentiment-neutral">22%</div>
+                            <div class="text-sm text-gray-600">Neutral</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold sentiment-negative">10%</div>
+                            <div class="text-sm text-gray-600">Negative</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4">Engagement Trends</h3>
+                    <canvas id="engagementChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4">Key Topics</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Road Maintenance</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">85%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Community Center</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full" style="width: 72%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">72%</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold">Park Improvements</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-purple-600 h-2 rounded-full" style="width: 68%"></div>
+                                </div>
+                                <span class="text-sm text-gray-600">68%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4">Demographics</h3>
+                    <canvas id="demographicsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Tab -->
+        <div id="budget-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold mb-4">Budget Allocation</h3>
+                    <canvas id="budgetChart" width="400" height="300"></canvas>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold mb-4">Budget Summary</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span>Total Available</span>
+                                <span class="font-bold text-green-600">$2,500,000</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Currently Allocated</span>
+                                <span class="font-bold text-blue-600">$1,850,000</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Remaining</span>
+                                <span class="font-bold text-purple-600">$650,000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold mb-4">Top Funded Projects</h4>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-blue-500 pl-4">
+                                <h5 class="font-semibold">Main Street Renovation</h5>
+                                <p class="text-sm text-gray-600">$450,000 • 892 votes</p>
+                            </div>
+                            <div class="border-l-4 border-green-500 pl-4">
+                                <h5 class="font-semibold">Community Center Expansion</h5>
+                                <p class="text-sm text-gray-600">$380,000 • 756 votes</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h5 class="font-semibold">Riverside Park Improvements</h5>
+                                <p class="text-sm text-gray-600">$220,000 • 634 votes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Proposal Modal -->
+    <div id="proposalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-6">Propose New Project</h3>
+            <form id="proposalForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Project Title</label>
+                        <input type="text" id="projectTitle" class="w-full px-4 py-2 border rounded-lg" placeholder="Enter project name">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Category</label>
+                        <select id="projectCategory" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="infrastructure">Infrastructure</option>
+                            <option value="parks">Parks & Recreation</option>
+                            <option value="education">Education</option>
+                            <option value="safety">Public Safety</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Estimated Cost</label>
+                        <input type="number" id="projectCost" class="w-full px-4 py-2 border rounded-lg" placeholder="$0">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Timeline</label>
+                        <select id="projectTimeline" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="3-6 months">3-6 months</option>
+                            <option value="6-12 months">6-12 months</option>
+                            <option value="1-2 years">1-2 years</option>
+                            <option value="2+ years">2+ years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Project Description</label>
+                    <textarea id="projectDescription" class="w-full px-4 py-2 border rounded-lg" rows="4" placeholder="Describe your project and its benefits to the community..."></textarea>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Expected Benefits</label>
+                    <textarea id="projectBenefits" class="w-full px-4 py-2 border rounded-lg" rows="3" placeholder="How will this project benefit the community?"></textarea>
+                </div>
+                <div class="flex space-x-4">
+                    <button type="button" id="cancelProposal" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">Submit Proposal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        const projects = [
+            {
+                id: 1,
+                title: "Main Street Renovation",
+                category: "infrastructure",
+                cost: 450000,
+                votes: 892,
+                description: "Complete renovation of Main Street including new sidewalks, lighting, and bike lanes.",
+                benefits: "Improved safety, increased foot traffic for businesses, better accessibility",
+                timeline: "6-12 months",
+                author: "City Planning Committee",
+                date: "2024-01-15",
+                comments: 47,
+                sentiment: "positive"
+            },
+            {
+                id: 2,
+                title: "Community Center Expansion",
+                category: "education",
+                cost: 380000,
+                votes: 756,
+                description: "Expand the community center with new meeting rooms, computer lab, and fitness facilities.",
+                benefits: "More programs for residents, job training opportunities, health and wellness",
+                timeline: "1-2 years",
+                author: "Sarah Chen",
+                date: "2024-01-12",
+                comments: 32,
+                sentiment: "positive"
+            },
+            {
+                id: 3,
+                title: "Riverside Park Improvements",
+                category: "parks",
+                cost: 220000,
+                votes: 634,
+                description: "New playground equipment, walking trails, and picnic areas at Riverside Park.",
+                benefits: "Family recreation, outdoor activities, property value increase",
+                timeline: "3-6 months",
+                author: "Parks Committee",
+                date: "2024-01-10",
+                comments: 28,
+                sentiment: "positive"
+            },
+            {
+                id: 4,
+                title: "Traffic Light Installation",
+                category: "safety",
+                cost: 85000,
+                votes: 423,
+                description: "Install traffic lights at the intersection of Oak and Pine Streets.",
+                benefits: "Improved traffic safety, reduced accidents, better pedestrian crossing",
+                timeline: "3-6 months",
+                author: "Mike Rodriguez",
+                date: "2024-01-08",
+                comments: 19,
+                sentiment: "neutral"
+            }
+        ];
+
+        const forumPosts = [
+            {
+                id: 1,
+                title: "Thoughts on the Main Street Renovation?",
+                author: "Anna Johnson",
+                category: "projects",
+                content: "I'm really excited about this project. The current sidewalks are in terrible condition...",
+                replies: 12,
+                date: "2024-01-16",
+                sentiment: "positive"
+            },
+            {
+                id: 2,
+                title: "Community Center - What programs would you like to see?",
+                author: "David Kim",
+                category: "projects",
+                content: "If we expand the community center, what kind of programs should we prioritize?",
+                replies: 8,
+                date: "2024-01-15",
+                sentiment: "neutral"
+            },
+            {
+                id: 3,
+                title: "Budget priorities for next year",
+                author: "Lisa Martinez",
+                category: "general",
+                content: "What do you think should be our top budget priorities for 2024?",
+                replies: 15,
+                date: "2024-01-14",
+                sentiment: "neutral"
+            }
+        ];
+
+        let currentTab = 'projects';
+        let userVotes = new Set();
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('hover:bg-gray-100');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('tab-active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.remove('hover:bg-gray-100');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+
+            currentTab = tabName;
+
+            // Initialize tab-specific content
+            if (tabName === 'analytics') {
+                initializeCharts();
+            }
+        }
+
+        // Render projects
+        function renderProjects() {
+            const projectsList = document.getElementById('projectsList');
+            projectsList.innerHTML = projects.map(project => {
+                const hasVoted = userVotes.has(project.id);
+                const progressPercent = Math.min(100, (project.votes / 1000) * 100);
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <h4 class="text-xl font-bold">${project.title}</h4>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">${project.category}</span>
+                                </div>
+                                <p class="text-gray-600 mb-3">${project.description}</p>
+                                <div class="text-sm text-gray-500 mb-3">
+                                    <span>💰 $${project.cost.toLocaleString()}</span> • 
+                                    <span>⏱️ ${project.timeline}</span> • 
+                                    <span>👤 ${project.author}</span>
+                                </div>
+                            </div>
+                            <div class="text-right ml-4">
+                                <div class="text-2xl font-bold text-blue-600">${project.votes}</div>
+                                <div class="text-sm text-gray-500">votes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Community Support</span>
+                                <span>${Math.round(progressPercent)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full progress-bar" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-3 rounded-lg mb-4">
+                            <div class="text-sm font-semibold mb-1">Expected Benefits:</div>
+                            <div class="text-sm text-gray-600">${project.benefits}</div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-4">
+                                <button onclick="voteForProject(${project.id})" 
+                                        class="vote-button ${hasVoted ? 'bg-green-600' : 'bg-blue-600'} hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold ${hasVoted ? 'cursor-not-allowed' : ''}">
+                                    ${hasVoted ? '✓ Voted' : '👍 Vote'}
+                                </button>
+                                <button onclick="showProjectDetails(${project.id})" class="border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg">
+                                    💬 Discuss (${project.comments})
+                                </button>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                Posted ${new Date(project.date).toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render forum posts
+        function renderForumPosts() {
+            const forumPosts = document.getElementById('forumPosts');
+            forumPosts.innerHTML = window.forumPosts.map(post => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <h5 class="font-semibold text-lg">${post.title}</h5>
+                        <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">${post.category}</span>
+                    </div>
+                    <p class="text-gray-600 mb-3">${post.content}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <div>By ${post.author} • ${new Date(post.date).toLocaleDateString()}</div>
+                        <div class="flex items-center space-x-4">
+                            <span>💬 ${post.replies} replies</span>
+                            <button class="text-blue-600 hover:text-blue-800">Reply</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Vote for project
+        function voteForProject(projectId) {
+            if (userVotes.has(projectId)) {
+                showNotification('You have already voted for this project!', 'warning');
+                return;
+            }
+
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                project.votes += 1;
+                userVotes.add(projectId);
+                renderProjects();
+                updateVotingStats();
+                showNotification(`Thank you for voting for "${project.title}"!`, 'success');
+            }
+        }
+
+        // Update voting statistics
+        function updateVotingStats() {
+            const totalVotes = projects.reduce((sum, project) => sum + project.votes, 0);
+            document.getElementById('totalVotes').textContent = totalVotes.toLocaleString();
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white font-semibold z-50 ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'warning' ? 'bg-yellow-500' :
+                type === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Sentiment Chart
+            const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+            new Chart(sentimentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: [68, 22, 10],
+                        backgroundColor: ['#10b981', '#6b7280', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Engagement Chart
+            const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+            new Chart(engagementCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Forum Posts',
+                        data: [45, 62, 78, 89],
+                        borderColor: '#3b82f6',
+                        tension: 0.4
+                    }, {
+                        label: 'Votes Cast',
+                        data: [120, 180, 245, 312],
+                        borderColor: '#10b981',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Demographics Chart
+            const demographicsCtx = document.getElementById('demographicsChart').getContext('2d');
+            new Chart(demographicsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'],
+                    datasets: [{
+                        label: 'Participants',
+                        data: [89, 156, 203, 178, 134, 87],
+                        backgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Budget Chart
+            const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+            new Chart(budgetCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Infrastructure', 'Parks & Recreation', 'Education', 'Public Safety', 'Available'],
+                    datasets: [{
+                        data: [450000, 220000, 380000, 85000, 650000],
+                        backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f3f4f6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Modal handlers
+        document.getElementById('proposeBtn').addEventListener('click', () => {
+            document.getElementById('proposalModal').classList.remove('hidden');
+            document.getElementById('proposalModal').classList.add('flex');
+        });
+
+        document.getElementById('cancelProposal').addEventListener('click', () => {
+            document.getElementById('proposalModal').classList.add('hidden');
+            document.getElementById('proposalModal').classList.remove('flex');
+        });
+
+        // Form submissions
+        document.getElementById('proposalForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('projectTitle').value;
+            const category = document.getElementById('projectCategory').value;
+            const cost = parseInt(document.getElementById('projectCost').value);
+            const description = document.getElementById('projectDescription').value;
+            
+            if (title && category && cost && description) {
+                const newProject = {
+                    id: projects.length + 1,
+                    title,
+                    category,
+                    cost,
+                    votes: 1,
+                    description,
+                    benefits: document.getElementById('projectBenefits').value,
+                    timeline: document.getElementById('projectTimeline').value,
+                    author: "You",
+                    date: new Date().toISOString().split('T')[0],
+                    comments: 0,
+                    sentiment: "neutral"
+                };
+                
+                projects.unshift(newProject);
+                renderProjects();
+                document.getElementById('proposalModal').classList.add('hidden');
+                document.getElementById('proposalModal').classList.remove('flex');
+                document.getElementById('proposalForm').reset();
+                showNotification('Project proposal submitted successfully!', 'success');
+            }
+        });
+
+        document.getElementById('newPostForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const category = document.getElementById('postCategory').value;
+            
+            if (title && content) {
+                const newPost = {
+                    id: window.forumPosts.length + 1,
+                    title,
+                    author: "You",
+                    category,
+                    content,
+                    replies: 0,
+                    date: new Date().toISOString().split('T')[0],
+                    sentiment: "neutral"
+                };
+                
+                window.forumPosts.unshift(newPost);
+                renderForumPosts();
+                document.getElementById('newPostForm').reset();
+                showNotification('Discussion posted successfully!', 'success');
+            }
+        });
+
+        // Initialize the app
+        window.forumPosts = forumPosts;
+        renderProjects();
+        renderForumPosts();
+        updateVotingStats();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9796e47503db14aa',t:'MTc1NjkxOTc2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
